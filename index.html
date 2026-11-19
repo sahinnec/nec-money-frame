@@ -1,323 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nec Money 4th Anniversary Frame</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      padding: 20px;
-      background: #f3f6fb;
-      display: flex;
-      justify-content: center;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 520px;
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    h1 {
-      margin: 0 0 10px;
-      font-size: 24px;
-      text-align: center;
-      color: #0b5f2a;
-    }
-
-    p {
-      text-align: center;
-      color: #555;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-
-    canvas {
-      width: 100%;
-      max-width: 100%;
-      border-radius: 12px;
-      background: #eee;
-      display: block;
-      margin: 0 auto 15px;
-      touch-action: none;
-    }
-
-    .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .row > * {
-      flex: 1;
-    }
-
-    input[type="file"],
-    input[type="range"],
-    button {
-      width: 100%;
-    }
-
-    input[type="file"] {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      background: #fff;
-    }
-
-    input[type="range"] {
-      accent-color: #0b8f42;
-    }
-
-    button {
-      padding: 12px 16px;
-      border: none;
-      border-radius: 10px;
-      background: #01AC50;
-      color: white;
-      font-size: 15px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    button:hover {
-      opacity: 0.92;
-    }
-
-    .secondary {
-      background: #d9534f;
-    }
-
-    .note {
-      margin-top: 14px;
-      font-size: 13px;
-      color: #666;
-      line-height: 1.5;
-      text-align: left;
-      background: #f9fafb;
-      border: 1px solid #eee;
-      border-radius: 10px;
-      padding: 12px;
-    }
-
-    .label {
-      font-size: 14px;
-      color: #333;
-      margin-bottom: -6px;
-      font-weight: 600;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#008b44">
+<title>Nec Money | 4 Years Anniversary Frame</title>
+<style>
+  :root { --green: #01AC50; --dark: #07562e; --muted: #667085; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px 14px 42px; background: linear-gradient(160deg, #eef8f1 0%, #f8fafb 60%, #e8f1fa 100%); color: #182c22; font-family: Arial, Helvetica, sans-serif; min-height: 100vh; }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  .brand { text-align: center; margin-bottom: 18px; }
+  .tag { display:inline-block; border: 1px solid #bcebd1; background: #e6fff0; color: var(--dark); border-radius: 99px; padding: 7px 13px; font-size: 12px; font-weight: bold; letter-spacing: .05em; }
+  h1 { font-size: clamp(23px, 5vw, 30px); color: #096034; margin: 13px 0 8px; }
+  .subtitle { color: #5f7067; font-size: 14px; line-height: 1.55; margin: 0; }
+  .panel { background: white; padding: 19px; border-radius: 22px; box-shadow: 0 12px 44px rgba(10, 54, 29, .10); border: 1px solid #e6efe9; }
+  .frame-wrap { width: 100%; position: relative; border-radius: 14px; overflow:hidden; background: #f7f9f8; border: 1px solid #e5eaf0; }
+  canvas { display:block; width:100%; height:auto; touch-action:none; cursor: grab; user-select: none; }
+  canvas:active { cursor: grabbing; }
+  .status { min-height: 26px; text-align:center; font-size: 13px; padding: 9px 8px 0; color: #667085; }
+  .status.error { color: #b42318; }
+  .actions { display:grid; gap: 13px; margin-top: 14px; }
+  .upload { display:block; background:#f1fff5; border:2px dashed #81cc9e; color:#096034; text-align:center; padding:15px; border-radius:12px; font-weight:bold; cursor:pointer; }
+  .upload:hover { background:#e3f8ea; }
+  .upload input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+  .zoom-row { display:flex; align-items:center; justify-content:space-between; gap:12px; font-weight:bold; font-size:14px; color:#344b3d; }
+  .zoom-row span { min-width: 36px; text-align:right; }
+  input[type=range] { display:block; width:100%; accent-color: var(--green); margin: 4px 0; }
+  .buttons { display:grid; grid-template-columns: 1fr 1.4fr; gap:10px; }
+  button { font-family:inherit; border:0; border-radius:11px; min-height:48px; font-weight:bold; font-size:14px; cursor:pointer; padding:12px 9px; }
+  button:disabled { cursor:not-allowed; opacity: .45; }
+  .secondary { background:#edf2f0; color:#24503a; }
+  .primary { color:white; background: var(--green); box-shadow: 0 4px 14px rgba(1,172,80,.21); }
+  .primary:not(:disabled):hover { background:#009444; }
+  .help { font-size:12px; color:#65736a; text-align:center; margin:13px 0 0; line-height:1.6; }
+  footer { text-align:center; font-size:12px; color:#7b8980; margin: 20px 0 0; }
+  @media (max-width: 430px) { body{padding-top:16px} .panel{padding:12px} .buttons{grid-template-columns: 1fr} }
+</style>
 </head>
 <body>
-  <div class="app">
-    <h1>Nec Money 4th Anniversary Frame</h1>
-    <p>Upload your photo, adjust it, then download your framed image.</p>
-
-    <canvas id="canvas" width="1080" height="1080"></canvas>
-
-    <div class="controls">
-      <input type="file" id="upload" accept="image/*" />
-
-      <div class="label">Zoom</div>
-      <input type="range" id="zoom" min="0.5" max="3" step="0.01" value="1" />
-
-      <div class="row">
-        <button id="resetBtn" class="secondary">Reset Position</button>
-        <button id="downloadBtn">Download Image</button>
+<main class="wrap">
+  <header class="brand">
+    <div class="tag">NEC MONEY • AFRICA</div>
+    <h1>Celebrate Our 4th Anniversary</h1>
+    <p class="subtitle">Add your photo to the anniversary frame and download it for Facebook.</p>
+  </header>
+  <section class="panel" aria-label="Anniversary photo frame editor">
+    <div class="frame-wrap"><canvas id="preview" width="1080" height="1080" aria-label="Anniversary frame preview"></canvas></div>
+    <div class="status" id="status" role="status">Loading anniversary frame...</div>
+    <div class="actions">
+      <label class="upload" for="photo">+ Upload Your Photo<input id="photo" type="file" accept="image/*"></label>
+      <div>
+        <div class="zoom-row"><label for="zoom">Photo zoom</label><span id="zoomValue">100%</span></div>
+        <input type="range" id="zoom" min="1" max="3" step="0.01" value="1" disabled>
+      </div>
+      <div class="buttons">
+        <button id="reset" class="secondary" type="button" disabled>Reset Photo</button>
+        <button id="download" class="primary" type="button" disabled>Download Photo</button>
       </div>
     </div>
+    <p class="help">Upload photo → Drag to adjust → Zoom → Download PNG (1080 × 1080).<br>Photos are processed on your device and are not uploaded to a server.</p>
+  </section>
+  <footer>© Nec Money Transfer Limited</footer>
+</main>
+<script>
+(() => {
+  'use strict';
+  const canvas = document.getElementById('preview');
+  const ctx = canvas.getContext('2d');
+  const input = document.getElementById('photo');
+  const zoom = document.getElementById('zoom');
+  const zoomValue = document.getElementById('zoomValue');
+  const reset = document.getElementById('reset');
+  const download = document.getElementById('download');
+  const status = document.getElementById('status');
+  const frame = new Image();
+  let frameReady = false;
+  let photo = null;
+  let imageURL = null;
+  let baseScale = 1;
+  let zoomFactor = 1;
+  const hole = { x: 542, y: 584, r: 300 };
+  let px = hole.x;
+  let py = hole.y;
+  let dragging = false;
+  let lastPoint = null;
 
-    <div class="note">
-      <strong>How to use:</strong><br>
-      1. Upload your photo<br>
-      2. Drag the photo to position it inside the circle<br>
-      3. Use zoom slider to resize<br>
-      4. Click Download Image
-    </div>
-  </div>
+  function message(text, error=false) {
+    status.textContent = text;
+    status.classList.toggle('error', error);
+  }
 
-  <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+  function fit() {
+    if (!photo) return;
+    baseScale = Math.max((hole.r*2+4)/photo.naturalWidth, (hole.r*2+4)/photo.naturalHeight);
+    zoomFactor = 1;
+    zoom.value = '1';
+    zoomValue.textContent = '100%';
+    px = hole.x; py = hole.y;
+    render();
+  }
 
-    const upload = document.getElementById('upload');
-    const zoomSlider = document.getElementById('zoom');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const resetBtn = document.getElementById('resetBtn');
+  function constrain() {
+    if (!photo) return;
+    const hw = photo.naturalWidth * baseScale * zoomFactor / 2;
+    const hh = photo.naturalHeight * baseScale * zoomFactor / 2;
+    px = Math.max(hole.x + hole.r - hw, Math.min(hole.x - hole.r + hw, px));
+    py = Math.max(hole.y + hole.r - hh, Math.min(hole.y - hole.r + hh, py));
+  }
 
-    const frameImg = new Image();
-    frameImg.src = 'frame.png';
+  function render() {
+    ctx.clearRect(0,0,1080,1080);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0,0,1080,1080);
+    // Photo stays behind the transparent centre of the decorative frame.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(hole.x, hole.y, hole.r, 0, Math.PI*2);
+    ctx.clip();
+    if (photo) {
+      constrain();
+      const w = photo.naturalWidth * baseScale * zoomFactor;
+      const h = photo.naturalHeight * baseScale * zoomFactor;
+      ctx.drawImage(photo, px - w/2, py - h/2, w, h);
+    } else {
+      ctx.fillStyle = '#f3f6f5';
+      ctx.fillRect(hole.x-hole.r, hole.y-hole.r, hole.r*2, hole.r*2);
+      ctx.fillStyle = '#7a8b81';
+      ctx.font = 'bold 28px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Upload your photo', hole.x, hole.y-12);
+      ctx.font = '22px Arial, sans-serif';
+      ctx.fillText('to celebrate with us', hole.x, hole.y+25);
+    }
+    ctx.restore();
+    if (frameReady) ctx.drawImage(frame, 0,0,1080,1080);
+  }
 
-    let userImg = null;
-    let imgX = 540;
-    let imgY = 540;
-    let scale = 1;
-    let dragging = false;
-    let startX = 0;
-    let startY = 0;
+  function point(ev) {
+    const rect = canvas.getBoundingClientRect();
+    return { x:(ev.clientX-rect.left)*1080/rect.width, y:(ev.clientY-rect.top)*1080/rect.height };
+  }
 
-    const circle = {
-      x: 525,
-      y: 545,
-      r: 315
+  canvas.addEventListener('pointerdown', ev => {
+    if (!photo) return;
+    const pos = point(ev);
+    if (Math.hypot(pos.x-hole.x,pos.y-hole.y) > hole.r+5) return;
+    dragging=true; lastPoint=pos;
+    canvas.setPointerCapture(ev.pointerId);
+  });
+  canvas.addEventListener('pointermove', ev => {
+    if (!dragging || !photo) return;
+    const pos=point(ev);
+    px+=pos.x-lastPoint.x; py+=pos.y-lastPoint.y;
+    lastPoint=pos;
+    render();
+  });
+  function stopDrag() { dragging=false; lastPoint=null; }
+  canvas.addEventListener('pointerup',stopDrag);
+  canvas.addEventListener('pointercancel',stopDrag);
+  canvas.addEventListener('lostpointercapture',stopDrag);
+
+  input.addEventListener('change', () => {
+    const file=input.files && input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { message('Please select an image file.', true); return; }
+    const candidateURL=URL.createObjectURL(file);
+    const candidate=new Image();
+    candidate.onload=() => {
+      if (imageURL) URL.revokeObjectURL(imageURL);
+      imageURL=candidateURL;
+      photo=candidate;
+      fit();
+      zoom.disabled=false;
+      reset.disabled=false;
+      download.disabled=!frameReady;
+      message(frameReady ? 'Ready! Adjust your photo and download.' : 'Photo ready. Waiting for frame...');
     };
+    candidate.onerror=() => { URL.revokeObjectURL(candidateURL); message('Could not open this image. Please choose a JPG or PNG photo.',true); };
+    candidate.src=candidateURL;
+  });
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  zoom.addEventListener('input', () => {
+    zoomFactor=Number(zoom.value);
+    zoomValue.textContent=Math.round(zoomFactor*100)+'%';
+    render();
+  });
+  reset.addEventListener('click', fit);
 
-      // Background white
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw user photo clipped inside circle
-      if (userImg) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-
-        const drawW = userImg.width * scale;
-        const drawH = userImg.height * scale;
-
-        ctx.drawImage(
-          userImg,
-          imgX - drawW / 2,
-          imgY - drawH / 2,
-          drawW,
-          drawH
-        );
-
-        ctx.restore();
-      } else {
-        // Placeholder inside circle
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.fillStyle = '#222';
-        ctx.fillRect(circle.x - circle.r, circle.y - circle.r, circle.r * 2, circle.r * 2);
-        ctx.restore();
-      }
-
-      // Frame on top
-      if (frameImg.complete) {
-        ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-      }
-    }
-
-    function resetImagePosition() {
-      if (!userImg) return;
-
-      const fitScale = Math.max(
-        (circle.r * 2) / userImg.width,
-        (circle.r * 2) / userImg.height
-      );
-
-      scale = fitScale;
-      zoomSlider.value = Math.min(Math.max(scale, 0.5), 3);
-      imgX = circle.x;
-      imgY = circle.y;
-      draw();
-    }
-
-    frameImg.onload = draw;
-
-    upload.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        userImg = new Image();
-        userImg.onload = function() {
-          resetImagePosition();
-        };
-        userImg.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    zoomSlider.addEventListener('input', () => {
-      scale = parseFloat(zoomSlider.value);
-      draw();
-    });
-
-    function getPointerPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-      return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height)
-      };
-    }
-
-    function startDrag(e) {
-      if (!userImg) return;
-      dragging = true;
-      const pos = getPointerPos(e);
-      startX = pos.x;
-      startY = pos.y;
-    }
-
-    function drag(e) {
-      if (!dragging || !userImg) return;
-      e.preventDefault();
-      const pos = getPointerPos(e);
-      const dx = pos.x - startX;
-      const dy = pos.y - startY;
-
-      imgX += dx;
-      imgY += dy;
-
-      startX = pos.x;
-      startY = pos.y;
-
-      draw();
-    }
-
-    function stopDrag() {
-      dragging = false;
-    }
-
-    canvas.addEventListener('mousedown', startDrag);
-    canvas.addEventListener('mousemove', drag);
-    canvas.addEventListener('mouseup', stopDrag);
-    canvas.addEventListener('mouseleave', stopDrag);
-
-    canvas.addEventListener('touchstart', startDrag, { passive: false });
-    canvas.addEventListener('touchmove', drag, { passive: false });
-    canvas.addEventListener('touchend', stopDrag);
-
-    resetBtn.addEventListener('click', resetImagePosition);
-
-    downloadBtn.addEventListener('click', () => {
-      draw();
-      const link = document.createElement('a');
-      link.download = 'nec-money-4th-anniversary-frame.png';
-      link.href = canvas.toDataURL('image/png');
+  download.addEventListener('click', () => {
+    if (!photo) { message('Please upload a photo first.',true); return; }
+    if (!frameReady) { message('The frame has not loaded. Please refresh the page.',true); return; }
+    render();
+    // Blob downloads are more reliable for large PNG files.
+    canvas.toBlob(blob => {
+      if (!blob) { message('Download could not be prepared. Please try another browser.',true); return; }
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url;
+      link.download='Nec-Money-4th-Anniversary-Profile-Photo.png';
+      document.body.appendChild(link);
       link.click();
-    });
+      link.remove();
+      message('Your framed photo is ready for download.');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    },'image/png');
+  });
 
-    draw();
-  </script>
+  // This is the EXISTING filename in your current GitHub repository.
+  // If you rename the file to frame.png, change this line to frame.src = 'frame.png';
+  frame.onload=() => {
+    if (!frame.naturalWidth) { message('The frame image could not be opened.',true); return; }
+    frameReady=true;
+    render();
+    download.disabled=!photo;
+    message(photo ? 'Ready! Adjust your photo and download.' : 'Anniversary frame loaded. Upload your photo to start.');
+  };
+  frame.onerror=() => {
+    frameReady=false;
+    render();
+    download.disabled=true;
+    message('Frame not found. Check the file named frame.png.png in GitHub.',true);
+  };
+  frame.src='frame.png.png';
+  render();
+})();
+</script>
 </body>
 </html>

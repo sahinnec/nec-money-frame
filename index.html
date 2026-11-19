@@ -25,7 +25,11 @@
   .upload:hover { background:#e3f8ea; }
   .upload input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
   .zoom-row { display:flex; align-items:center; justify-content:space-between; gap:12px; font-weight:bold; font-size:14px; color:#344b3d; }
-  .zoom-row span { min-width: 36px; text-align:right; }
+  .zoom-row span { min-width: 44px; text-align:right; }
+  .zoom-controls { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 10px; align-items: center; margin-top: 9px; }
+  .zoom-btn { width: 48px; height: 48px; border-radius: 12px; background: #e9f8ef; border: 1px solid #c5e5d2; color: #076337; font-size: 27px; font-weight: 600; padding: 0; }
+  .zoom-btn:not(:disabled):hover { background: #d4f3e0; }
+  .zoom-guide { margin: 7px 0 0; color: #667085; font-size: 12px; text-align: center; }
   input[type=range] { display:block; width:100%; accent-color: var(--green); margin: 4px 0; }
   .buttons { display:grid; grid-template-columns: 1fr 1.4fr; gap:10px; }
   button { font-family:inherit; border:0; border-radius:11px; min-height:48px; font-weight:bold; font-size:14px; cursor:pointer; padding:12px 9px; }
@@ -35,7 +39,7 @@
   .primary:not(:disabled):hover { background:#009444; }
   .help { font-size:12px; color:#65736a; text-align:center; margin:13px 0 0; line-height:1.6; }
   footer { text-align:center; font-size:12px; color:#7b8980; margin: 20px 0 0; }
-  @media (max-width: 430px) { body{padding-top:16px} .panel{padding:12px} .buttons{grid-template-columns: 1fr} }
+  @media (max-width: 430px) { body{padding-top:16px} .panel{padding:12px} .buttons{grid-template-columns: 1fr} .zoom-controls{gap:7px} }
 </style>
 </head>
 <body>
@@ -51,15 +55,20 @@
     <div class="actions">
       <label class="upload" for="photo">+ Upload Your Photo<input id="photo" type="file" accept="image/*"></label>
       <div>
-        <div class="zoom-row"><label for="zoom">Photo zoom</label><span id="zoomValue">100%</span></div>
-        <input type="range" id="zoom" min="1" max="3" step="0.01" value="1" disabled>
+        <div class="zoom-row"><label for="zoom">Adjust photo size (Zoom In / Out)</label><span id="zoomValue">100%</span></div>
+        <div class="zoom-controls">
+          <button type="button" class="zoom-btn" id="zoomOut" aria-label="Zoom out" title="Zoom Out" disabled>−</button>
+          <input type="range" id="zoom" min="0.25" max="3.5" step="0.01" value="1" aria-label="Photo size" disabled>
+          <button type="button" class="zoom-btn" id="zoomIn" aria-label="Zoom in" title="Zoom In" disabled>+</button>
+        </div>
+        <p class="zoom-guide">− Zoom Out &nbsp; • &nbsp; + Zoom In &nbsp; • &nbsp; 100% = Fit circle</p>
       </div>
       <div class="buttons">
         <button id="reset" class="secondary" type="button" disabled>Reset Photo</button>
         <button id="download" class="primary" type="button" disabled>Download Photo</button>
       </div>
     </div>
-    <p class="help">Upload photo → Drag to adjust → Zoom → Download PNG (1080 × 1080).<br>Photos are processed on your device and are not uploaded to a server.</p>
+    <p class="help">Upload photo → Drag to adjust → Tap − to zoom out or + to zoom in → Download PNG (1080 × 1080).<br>Photos are processed on your device and are not uploaded to a server.</p>
   </section>
   <footer>© Nec Money Transfer Limited</footer>
 </main>
@@ -71,6 +80,8 @@
   const input = document.getElementById('photo');
   const zoom = document.getElementById('zoom');
   const zoomValue = document.getElementById('zoomValue');
+  const zoomOut = document.getElementById('zoomOut');
+  const zoomIn = document.getElementById('zoomIn');
   const reset = document.getElementById('reset');
   const download = document.getElementById('download');
   const status = document.getElementById('status');
@@ -98,6 +109,7 @@
     zoom.value = '1';
     zoomValue.textContent = '100%';
     px = hole.x; py = hole.y;
+    updateZoomButtons();
     render();
   }
 
@@ -105,8 +117,12 @@
     if (!photo) return;
     const hw = photo.naturalWidth * baseScale * zoomFactor / 2;
     const hh = photo.naturalHeight * baseScale * zoomFactor / 2;
-    px = Math.max(hole.x + hole.r - hw, Math.min(hole.x - hole.r + hw, px));
-    py = Math.max(hole.y + hole.r - hh, Math.min(hole.y - hole.r + hh, py));
+    // When zooming out below 100%, keep a small image movable but inside the circle.
+    // When zoomed in, constrain panning so the circle remains filled.
+    const rangeX = Math.abs(hw - hole.r);
+    const rangeY = Math.abs(hh - hole.r);
+    px = Math.max(hole.x - rangeX, Math.min(hole.x + rangeX, px));
+    py = Math.max(hole.y - rangeY, Math.min(hole.y + rangeY, py));
   }
 
   function render() {
@@ -173,6 +189,9 @@
       photo=candidate;
       fit();
       zoom.disabled=false;
+      zoomOut.disabled=false;
+      zoomIn.disabled=false;
+      updateZoomButtons();
       reset.disabled=false;
       download.disabled=!frameReady;
       message(frameReady ? 'Ready! Adjust your photo and download.' : 'Photo ready. Waiting for frame...');
@@ -181,11 +200,22 @@
     candidate.src=candidateURL;
   });
 
-  zoom.addEventListener('input', () => {
-    zoomFactor=Number(zoom.value);
-    zoomValue.textContent=Math.round(zoomFactor*100)+'%';
+  function updateZoomButtons() {
+    if (!photo) { zoomOut.disabled = true; zoomIn.disabled = true; return; }
+    zoomOut.disabled = zoomFactor <= Number(zoom.min) + 0.001;
+    zoomIn.disabled = zoomFactor >= Number(zoom.max) - 0.001;
+  }
+  function setZoom(value) {
+    if (!photo) return;
+    zoomFactor = Math.max(Number(zoom.min), Math.min(Number(zoom.max), value));
+    zoom.value = String(zoomFactor);
+    zoomValue.textContent = Math.round(zoomFactor*100) + '%';
+    updateZoomButtons();
     render();
-  });
+  }
+  zoom.addEventListener('input', () => setZoom(Number(zoom.value)));
+  zoomOut.addEventListener('click', () => setZoom(zoomFactor / 1.2));
+  zoomIn.addEventListener('click', () => setZoom(zoomFactor * 1.2));
   reset.addEventListener('click', fit);
 
   download.addEventListener('click', () => {

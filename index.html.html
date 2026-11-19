@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nec Money 4th Anniversary Frame</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f3f6fb;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      text-align: center;
+      color: #0b5f2a;
+    }
+
+    p {
+      text-align: center;
+      color: #555;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 12px;
+      background: #eee;
+      display: block;
+      margin: 0 auto 15px;
+      touch-action: none;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .row > * {
+      flex: 1;
+    }
+
+    input[type="file"],
+    input[type="range"],
+    button {
+      width: 100%;
+    }
+
+    input[type="file"] {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    input[type="range"] {
+      accent-color: #0b8f42;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #01AC50;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      opacity: 0.92;
+    }
+
+    .secondary {
+      background: #d9534f;
+    }
+
+    .note {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+      text-align: left;
+      background: #f9fafb;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .label {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: -6px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Nec Money 4th Anniversary Frame</h1>
+    <p>Upload your photo, adjust it, then download your framed image.</p>
+
+    <canvas id="canvas" width="1080" height="1080"></canvas>
+
+    <div class="controls">
+      <input type="file" id="upload" accept="image/*" />
+
+      <div class="label">Zoom</div>
+      <input type="range" id="zoom" min="0.5" max="3" step="0.01" value="1" />
+
+      <div class="row">
+        <button id="resetBtn" class="secondary">Reset Position</button>
+        <button id="downloadBtn">Download Image</button>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>How to use:</strong><br>
+      1. Upload your photo<br>
+      2. Drag the photo to position it inside the circle<br>
+      3. Use zoom slider to resize<br>
+      4. Click Download Image
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const upload = document.getElementById('upload');
+    const zoomSlider = document.getElementById('zoom');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const frameImg = new Image();
+    frameImg.src = 'frame.png';
+
+    let userImg = null;
+    let imgX = 540;
+    let imgY = 540;
+    let scale = 1;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    const circle = {
+      x: 525,
+      y: 545,
+      r: 315
+    };
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Background white
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw user photo clipped inside circle
+      if (userImg) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        const drawW = userImg.width * scale;
+        const drawH = userImg.height * scale;
+
+        ctx.drawImage(
+          userImg,
+          imgX - drawW / 2,
+          imgY - drawH / 2,
+          drawW,
+          drawH
+        );
+
+        ctx.restore();
+      } else {
+        // Placeholder inside circle
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.fillStyle = '#222';
+        ctx.fillRect(circle.x - circle.r, circle.y - circle.r, circle.r * 2, circle.r * 2);
+        ctx.restore();
+      }
+
+      // Frame on top
+      if (frameImg.complete) {
+        ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function resetImagePosition() {
+      if (!userImg) return;
+
+      const fitScale = Math.max(
+        (circle.r * 2) / userImg.width,
+        (circle.r * 2) / userImg.height
+      );
+
+      scale = fitScale;
+      zoomSlider.value = Math.min(Math.max(scale, 0.5), 3);
+      imgX = circle.x;
+      imgY = circle.y;
+      draw();
+    }
+
+    frameImg.onload = draw;
+
+    upload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        userImg = new Image();
+        userImg.onload = function() {
+          resetImagePosition();
+        };
+        userImg.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    zoomSlider.addEventListener('input', () => {
+      scale = parseFloat(zoomSlider.value);
+      draw();
+    });
+
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function startDrag(e) {
+      if (!userImg) return;
+      dragging = true;
+      const pos = getPointerPos(e);
+      startX = pos.x;
+      startY = pos.y;
+    }
+
+    function drag(e) {
+      if (!dragging || !userImg) return;
+      e.preventDefault();
+      const pos = getPointerPos(e);
+      const dx = pos.x - startX;
+      const dy = pos.y - startY;
+
+      imgX += dx;
+      imgY += dy;
+
+      startX = pos.x;
+      startY = pos.y;
+
+      draw();
+    }
+
+    function stopDrag() {
+      dragging = false;
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('mousemove', drag);
+    canvas.addEventListener('mouseup', stopDrag);
+    canvas.addEventListener('mouseleave', stopDrag);
+
+    canvas.addEventListener('touchstart', startDrag, { passive: false });
+    canvas.addEventListener('touchmove', drag, { passive: false });
+    canvas.addEventListener('touchend', stopDrag);
+
+    resetBtn.addEventListener('click', resetImagePosition);
+
+    downloadBtn.addEventListener('click', () => {
+      draw();
+      const link = document.createElement('a');
+      link.download = 'nec-money-4th-anniversary-frame.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    draw();
+  </script>
+</body>
+</html>
